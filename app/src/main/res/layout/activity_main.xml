@@ -4,7 +4,7 @@
     android:layout_height="200dp"
     tools:context=".MainActivity">
 
-    <android.support.v4.view.ViewPager
+    <com.laibatour.autoviewpager.AutoViewPager
         android:id="@+id/main_vp"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
