@@ -16,17 +16,23 @@ import android.view.Window;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
 
     private int[] imageIds;
     private LinearLayout main_ll_dots;
     private ViewPager main_vp;
+    private List<View> mCacheViewList = new ArrayList<>();
 
-    Handler handler = new Handler(){
+    Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-            main_vp.setCurrentItem(main_vp.getCurrentItem() + 1,true);
-            handler.sendEmptyMessageDelayed(0,5000);
+            main_vp.setCurrentItem(main_vp.getCurrentItem() + 1, true);
+
+            handler.removeCallbacksAndMessages(null);
+            handler.sendEmptyMessageDelayed(0, 5000);
         }
     };
 
@@ -48,21 +54,21 @@ public class MainActivity extends AppCompatActivity {
 
         updateDescAndDot();
 
-        handler.sendEmptyMessageDelayed(0, 5000);
-
         main_vp.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
 
                 int action = event.getAction();
-                switch (action){
+                switch (action) {
                     case MotionEvent.ACTION_DOWN:
                         handler.removeCallbacksAndMessages(null);
                         break;
                     case MotionEvent.ACTION_CANCEL:
+                        handler.removeCallbacksAndMessages(null);
                         handler.sendEmptyMessageDelayed(0, 5000);
                         break;
                     case MotionEvent.ACTION_UP:
+                        handler.removeCallbacksAndMessages(null);
                         handler.sendEmptyMessageDelayed(0, 5000);
                         break;
                 }
@@ -107,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
      * 根据当前page来显示不同的文字和点
      */
     private void updateDescAndDot() {
+        Log.e("Tag", "currentitem = " + (main_vp.getCurrentItem() % imageIds.length));
         int currentPage = main_vp.getCurrentItem() % imageIds.length;
         // tv_desc.setText(list.get(currentPage).getDesc());
 
@@ -121,7 +128,11 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public int getCount() {
-            return Integer.MAX_VALUE;
+            if (imageIds.length <= 1) {
+                return imageIds.length;
+            } else {
+                return Integer.MAX_VALUE;
+            }
         }
 
         @Override
@@ -131,8 +142,13 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public Object instantiateItem(ViewGroup container, int position) {
-            Log.e("current position =====", position + "");
-            ImageView imageView = new ImageView(MainActivity.this);
+            ImageView imageView;
+            if (mCacheViewList != null && !mCacheViewList.isEmpty()) {
+                imageView = (ImageView) mCacheViewList.remove(0);
+            } else {
+                imageView = new ImageView(MainActivity.this);
+            }
+
             imageView.setImageResource(imageIds[position % imageIds.length]);
             imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
             container.addView(imageView);
@@ -141,7 +157,10 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void destroyItem(ViewGroup container, int position, Object object) {
-            container.removeView((View) object);
+            ImageView imageView = (ImageView) object;
+
+            container.removeView(imageView);
+            mCacheViewList.add(imageView);
         }
     }
 
@@ -149,5 +168,22 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         handler.removeCallbacksAndMessages(null);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (handler != null) {
+            handler.removeCallbacksAndMessages(null);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (handler != null) {
+            handler.removeCallbacksAndMessages(null);
+            handler.sendEmptyMessageDelayed(0, 5000);
+        }
     }
 }
